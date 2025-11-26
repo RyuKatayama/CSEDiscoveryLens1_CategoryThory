@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE発見レンズの圏論的定式化</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=STIX+Two+Math&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #2d5a87;
+            --accent: #e67e22;
+            --accent2: #27ae60;
+            --accent3: #8e44ad;
+            --accent4: #c0392b;
+            --bg-light: #f8f9fa;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #dce4ec;
+            --math-bg: #fef9e7;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .presentation-container {
+            width: 100%;
+            max-width: 1400px;
+            aspect-ratio: 16 / 9;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            padding: 35px 50px 25px 50px;
+            position: relative;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--accent2), var(--accent3));
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        /* Title Slide */
+        .slide.title-slide {
+            background: linear-gradient(135deg, var(--primary) 0%, #0d2137 100%);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .slide.title-slide::before {
+            display: none;
+        }
+
+        .title-slide h1 {
+            font-size: 3.2rem;
+            font-weight: 900;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .title-slide h2 {
+            font-size: 1.9rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.8;
+            border-top: 2px solid rgba(255,255,255,0.3);
+            padding-top: 25px;
+            margin-top: 15px;
+        }
+
+        /* Content Slides */
+        .slide-header {
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .slide-header h2 {
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 4px solid var(--accent);
+            display: inline-block;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Math Box */
+        .math-box {
+            background: var(--math-bg);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 15px 20px;
+            font-family: 'STIX Two Math', 'Noto Sans JP', serif;
+        }
+
+        .math-box.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+        }
+
+        .math-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .math-box.primary .math-title {
+            color: white;
+        }
+
+        .math-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        .math-formula {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 18px;
+            margin: 8px 0;
+            font-family: 'STIX Two Math', serif;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+
+        .math-box.primary .math-formula {
+            background: rgba(255,255,255,0.95);
+            color: var(--text-dark);
+        }
+
+        /* Definition Box */
+        .def-box {
+            background: white;
+            border-left: 5px solid var(--accent);
+            border-radius: 0 10px 10px 0;
+            padding: 15px 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .def-box.accent2 { border-left-color: var(--accent2); }
+        .def-box.accent3 { border-left-color: var(--accent3); }
+        .def-box.accent4 { border-left-color: var(--accent4); }
+
+        .def-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            background: var(--accent);
+            padding: 3px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .def-box.accent2 .def-label { background: var(--accent2); }
+        .def-box.accent3 .def-label { background: var(--accent3); }
+        .def-box.accent4 .def-label { background: var(--accent4); }
+
+        .def-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .def-content {
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Table Styles */
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        .styled-table thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .styled-table th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .styled-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 1.05rem;
+        }
+
+        .styled-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        /* Grid Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .card h4 {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .card p, .card li {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        /* Diagram Box */
+        .diagram-box {
+            background: linear-gradient(135deg, #ecf0f1 0%, #dfe6e9 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .diagram-box.dark {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .diagram-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .diagram-box.dark .diagram-title {
+            color: white;
+        }
+
+        /* Flow Elements */
+        .flow-horizontal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: white;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        .flow-box.highlight {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .diagram-box.dark .flow-arrow {
+            color: white;
+        }
+
+        /* Category Diagram */
+        .category-diagram {
+            font-family: 'STIX Two Math', monospace;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            white-space: pre-line;
+            color: var(--text-dark);
+        }
+
+        /* Theorem Box */
+        .theorem-box {
+            background: linear-gradient(135deg, #fef9e7 0%, #fdebd0 100%);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 15px 20px;
+        }
+
+        .theorem-label {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            background: var(--accent);
+            padding: 4px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .theorem-content {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: auto;
+            padding-top: 12px;
+            flex-shrink: 0;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-indicator {
+            font-size: 1.15rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* Highlight */
+        .highlight-text {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .text-accent { color: var(--accent); font-weight: 700; }
+        .text-accent2 { color: var(--accent2); font-weight: 700; }
+        .text-accent3 { color: var(--accent3); font-weight: 700; }
+        .text-primary { color: var(--primary); font-weight: 700; }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-primary { background: var(--primary); color: white; }
+        .badge-accent { background: var(--accent); color: white; }
+        .badge-accent2 { background: var(--accent2); color: white; }
+        .badge-accent3 { background: var(--accent3); color: white; }
+
+        /* Symbol */
+        .math-symbol {
+            font-family: 'STIX Two Math', serif;
+            font-size: 1.2rem;
+        }
+
+        /* Compact list */
+        .formula-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .formula-list li {
+            padding: 5px 0;
+            font-family: 'STIX Two Math', 'Noto Sans JP', serif;
+            font-size: 1.15rem;
+        }
+
+        .formula-list li::before {
+            content: '•';
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        /* Section title in slide */
+        .section-num {
+            font-size: 0.9rem;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>CSE発見レンズの圏論的定式化</h1>
+            <h2>Creative Systems Engineering の数学的基盤</h2>
+            <div class="subtitle">
+                M⁶⁵統合理論 × イノベーティブ思考法 × JOB理論 × TRIZ<br>
+                圏論による統一的記述
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()" disabled>← 前へ</button>
+                <span class="page-indicator">1 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: Overview -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <h2>圏論的定式化の全体構造</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box dark">
+                    <div class="diagram-title" style="font-size:1.25rem;">CSE発見システムの圏論的構造</div>
+                    <div class="category-diagram" style="font-size:1.05rem;">
+                        <strong>CSE = (𝓢, 𝓒, 𝓨, M⁶⁵, 𝓛, Φ)</strong>
+                    </div>
+                    <div class="three-column" style="margin-top:15px;gap:12px;">
+                        <div class="flow-box">
+                            <strong>𝓢</strong><br>ステークホルダー圏
+                        </div>
+                        <div class="flow-box">
+                            <strong>𝓒</strong><br>関心事圏
+                        </div>
+                        <div class="flow-box">
+                            <strong>𝓨</strong><br>システム圏
+                        </div>
+                        <div class="flow-box">
+                            <strong>M⁶⁵</strong><br>統合空間圏
+                        </div>
+                        <div class="flow-box">
+                            <strong>𝓛</strong><br>発見レンズ圏
+                        </div>
+                        <div class="flow-box highlight">
+                            <strong>Φ</strong><br>システム生成関手
+                        </div>
+                    </div>
+                </div>
+                <div class="two-column" style="margin-top:12px;">
+                    <div class="card">
+                        <h4>圏論を用いる意義</h4>
+                        <ul class="formula-list">
+                            <li>構造的同型性による客観的統合</li>
+                            <li>関手による理論間翻訳の形式化</li>
+                            <li>自然変換によるレンズ適用の記述</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>定式化の範囲</h4>
+                        <ul class="formula-list">
+                            <li>基本圏（𝓢, 𝓒, 𝓨）の定義</li>
+                            <li>M⁶⁵統合空間の積圏構造</li>
+                            <li>発見レンズの関手・自然変換表現</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">2 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 3: Basic Categories -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <h2>1. 基本圏の定義</h2>
+            </div>
+            <div class="slide-content">
+                <div class="three-column">
+                    <div class="def-box">
+                        <div class="def-label">定義 1.1</div>
+                        <div class="def-title">ステークホルダー圏 𝓢</div>
+                        <div class="def-content">
+                            <div class="math-formula" style="font-size:1rem;">
+                                𝓢 = (Ob(𝓢), Mor(𝓢), ∘, id)
+                            </div>
+                            <p style="font-size:0.95rem;margin-top:8px;">
+                                <strong>対象：</strong>潜在的ステークホルダー<br>
+                                <strong>射：</strong>影響・依存・協働関係
+                            </p>
+                        </div>
+                    </div>
+                    <div class="def-box accent2">
+                        <div class="def-label">定義 1.2</div>
+                        <div class="def-title">関心事圏 𝓒</div>
+                        <div class="def-content">
+                            <div class="math-formula" style="font-size:1rem;">
+                                𝓒 = (Ob(𝓒), Mor(𝓒), ∘, id)
+                            </div>
+                            <p style="font-size:0.95rem;margin-top:8px;">
+                                <strong>対象：</strong>潜在的関心事（Concern）<br>
+                                <strong>射：</strong>包含・派生・矛盾関係
+                            </p>
+                        </div>
+                    </div>
+                    <div class="def-box accent3">
+                        <div class="def-label">定義 1.3</div>
+                        <div class="def-title">システム圏 𝓨</div>
+                        <div class="def-content">
+                            <div class="math-formula" style="font-size:1rem;">
+                                𝓨 = (Ob(𝓨), Mor(𝓨), ∘, id)
+                            </div>
+                            <p style="font-size:0.95rem;margin-top:8px;">
+                                <strong>対象：</strong>潜在的システム<br>
+                                <strong>射：</strong>構成・進化・代替関係
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="math-box" style="margin-top:12px;">
+                    <div class="math-title">CSEの基本関数 F(s, c) の圏論的表現</div>
+                    <div class="math-formula">
+                        Φ: 𝓢 × 𝓒 → 𝓨 &nbsp;&nbsp;&nbsp; Φ(s, c) = Y<sub>s,c</sub>
+                    </div>
+                    <p style="font-size:1.05rem;text-align:center;">
+                        「ステークホルダー s の関心事 c を充足するシステム Y」を生成する<span class="text-accent">システム生成関手</span>
+                    </p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">3 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 4: M65 Structure -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <h2>2. M⁶⁵統合空間の圏論的構造</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="def-box">
+                        <div class="def-label">定義 2.1</div>
+                        <div class="def-title">象限圏 𝓠</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Ob(𝓠) = { I, It, We, Its, ST }
+                        </div>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            Mor(𝓠) = { τ<sub>αβ</sub>: α → β | α, β ∈ Ob(𝓠) }
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">τ<sub>αβ</sub> は象限間の変換射</p>
+                    </div>
+                    <div class="def-box accent2">
+                        <div class="def-label">定義 2.2</div>
+                        <div class="def-title">認識プロセス圏 𝓟</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Ob(𝓟) = { O, F, M, C, T, D }
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:5px;">Observer, Focus, Method, Construction, Target, Data</p>
+                    </div>
+                </div>
+                <div class="def-box accent3" style="margin-top:12px;">
+                    <div class="def-label">定義 2.3</div>
+                    <div class="def-title">M⁶⁵統合圏（積圏として定義）</div>
+                    <div class="math-formula" style="font-size:1.2rem;">
+                        M⁶⁵ = 𝓟 × 𝓠
+                    </div>
+                    <div class="math-formula" style="font-size:1rem;">
+                        Ob(M⁶⁵) = { (p, α) | p ∈ {O,F,M,C,T,D}, α ∈ {I,It,We,Its,ST} }
+                    </div>
+                    <p style="font-size:1.1rem;text-align:center;margin-top:10px;">
+                        <span class="highlight-text">6 × 5 = 30次元統合空間</span> を圏論的に構成
+                    </p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">4 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 5: Process Category -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <h2>認識プロセス圏 𝓟 の射構造</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box">
+                    <div class="diagram-title">6要素認識プロセスの循環構造</div>
+                    <div class="flow-horizontal" style="margin:15px 0;">
+                        <div class="flow-box" style="background:var(--primary);color:white;"><strong>O</strong><br>Observer</div>
+                        <div class="flow-arrow">→<br><small>attend</small></div>
+                        <div class="flow-box"><strong>F</strong><br>Focus</div>
+                        <div class="flow-arrow">→<br><small>select</small></div>
+                        <div class="flow-box"><strong>M</strong><br>Method</div>
+                        <div class="flow-arrow">→<br><small>apply</small></div>
+                        <div class="flow-box"><strong>C</strong><br>Construction</div>
+                        <div class="flow-arrow">→<br><small>aim</small></div>
+                        <div class="flow-box"><strong>T</strong><br>Target</div>
+                        <div class="flow-arrow">→<br><small>evidence</small></div>
+                        <div class="flow-box"><strong>D</strong><br>Data</div>
+                    </div>
+                    <div class="math-formula">
+                        learn: D → O &nbsp;&nbsp;（学習による成長・循環）
+                    </div>
+                </div>
+                <div class="math-box" style="margin-top:12px;">
+                    <div class="math-title">基本射の定義</div>
+                    <div class="three-column" style="gap:10px;">
+                        <div class="math-formula" style="font-size:0.95rem;">attend: O → F<br>（対象への注目）</div>
+                        <div class="math-formula" style="font-size:0.95rem;">select: F → M<br>（方法の選択）</div>
+                        <div class="math-formula" style="font-size:0.95rem;">apply: M → C<br>（方法の適用）</div>
+                        <div class="math-formula" style="font-size:0.95rem;">aim: C → T<br>（目標への方向付け）</div>
+                        <div class="math-formula" style="font-size:0.95rem;">evidence: T → D<br>（証拠の生成）</div>
+                        <div class="math-formula" style="font-size:0.95rem;">learn: D → O<br>（学習による成長）</div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">5 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 6: Discovery Lens Category -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <h2>3. 発見レンズ圏 𝓛 の定義</h2>
+            </div>
+            <div class="slide-content">
+                <div class="def-box" style="margin-bottom:12px;">
+                    <div class="def-label">定義 3.1</div>
+                    <div class="def-title">発見レンズ圏 𝓛</div>
+                    <div class="math-formula">
+                        Ob(𝓛) = 𝓛₁ ∪ 𝓛₂ ∪ 𝓛₃
+                    </div>
+                </div>
+                <div class="three-column">
+                    <div class="card" style="border-left:5px solid var(--accent);">
+                        <h4><span class="badge badge-accent">𝓛₁</span> 存在論的レンズ</h4>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            𝓛₁ = { L<sub>τ</sub> | τ: α → β }
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">
+                            M⁶⁵象限変換に基づく<br>
+                            「どの視点から見るか」
+                        </p>
+                    </div>
+                    <div class="card" style="border-left:5px solid var(--accent2);">
+                        <h4><span class="badge badge-accent2">𝓛₂</span> 認識論的レンズ</h4>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            𝓛₂ = { L<sub>θ</sub> | θ ∈ Θ }
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">
+                            イノベーティブ思考法<br>
+                            「どう問いを立てるか」
+                        </p>
+                    </div>
+                    <div class="card" style="border-left:5px solid var(--accent3);">
+                        <h4><span class="badge badge-accent3">𝓛₃</span> 発見的レンズ</h4>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            𝓛₃ = { L<sub>δ</sub> | δ ∈ Δ }
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">
+                            JOB理論・TRIZ原理<br>
+                            「何を発見するか」
+                        </p>
+                    </div>
+                </div>
+                <div class="math-box primary" style="margin-top:12px;">
+                    <div class="math-title">3層アーキテクチャの圏論的表現</div>
+                    <div class="math-formula">
+                        発見プロセス = L<sub>δ</sub> ∘ L<sub>θ</sub> ∘ L<sub>τ</sub>: 𝓢 × 𝓒 → 𝓢' × 𝓒'
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">6 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 7: Quadrant Transformation Functor -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <h2>象限変換関手（存在論的レンズ）</h2>
+            </div>
+            <div class="slide-content">
+                <div class="def-box" style="margin-bottom:12px;">
+                    <div class="def-label">定義 3.2</div>
+                    <div class="def-title">象限変換関手 T<sub>αβ</sub></div>
+                    <div class="math-formula">
+                        T<sub>αβ</sub>: M⁶⁵|<sub>α</sub> → M⁶⁵|<sub>β</sub>
+                    </div>
+                    <p style="font-size:1rem;margin-top:8px;">M⁶⁵|<sub>α</sub> は M⁶⁵ の象限 α への制限</p>
+                </div>
+                <div class="two-column">
+                    <div class="math-box">
+                        <div class="math-title">関手の性質</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            T<sub>αβ</sub>((p, α)) = (p, β)
+                        </div>
+                        <p style="font-size:0.95rem;text-align:center;">対象の変換</p>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            T<sub>αβ</sub>(f: (p₁,α) → (p₂,α)) = f': (p₁,β) → (p₂,β)
+                        </div>
+                        <p style="font-size:0.95rem;text-align:center;">射の変換</p>
+                    </div>
+                    <div class="math-box">
+                        <div class="math-title">合成則</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            T<sub>βγ</sub> ∘ T<sub>αβ</sub> = T<sub>αγ</sub>
+                        </div>
+                        <p style="font-size:0.95rem;text-align:center;">変換の推移性</p>
+                        <div class="math-formula" style="font-size:1rem;">
+                            T<sub>αα</sub> = Id<sub>M⁶⁵|α</sub>
+                        </div>
+                        <p style="font-size:0.95rem;text-align:center;">恒等変換</p>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:12px;background:#fef9e7;">
+                    <h4>意味：象限変換により、ある象限の認識プロセスを別の象限の視点に変換できる</h4>
+                    <p>例：Its象限（システム視点）→ I象限（個人内面視点）への変換で、新たなステークホルダー・関心事を発見</p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">7 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 8: Innovative Thinking Functor -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <h2>イノベーティブ思考法関手（認識論的レンズ）</h2>
+            </div>
+            <div class="slide-content">
+                <div class="def-box" style="margin-bottom:12px;">
+                    <div class="def-label">定義 3.3</div>
+                    <div class="def-title">5つの視点関手 V<sub>θ</sub></div>
+                    <div class="math-formula">
+                        Θ = { θ<sub>鳥</sub>, θ<sub>虫</sub>, θ<sub>魚</sub>, θ<sub>蝙蝠</sub>, θ<sub>心</sub> }
+                    </div>
+                    <div class="math-formula">
+                        V<sub>θ</sub>: 𝓢 × 𝓒 → 𝓢' × 𝓒'
+                    </div>
+                </div>
+                <table class="styled-table" style="font-size:0.95rem;">
+                    <thead>
+                        <tr>
+                            <th style="width:18%;">視点 θ</th>
+                            <th style="width:42%;">関手の定義</th>
+                            <th style="width:40%;">象限との対応</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>V<sub>鳥</sub></strong> 俯瞰</td>
+                            <td>(s, c) ↦ (Expand<sub>Its</sub>(s), Abstract(c))</td>
+                            <td>Its象限の拡張</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V<sub>虫</sub></strong> 詳細</td>
+                            <td>(s, c) ↦ (Detail<sub>It</sub>(s), Concrete(c))</td>
+                            <td>It象限の深掘り</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V<sub>魚</sub></strong> 流れ</td>
+                            <td>(s, c) ↦ (Temporal(s), Evolve(c))</td>
+                            <td>ST次元の考慮</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V<sub>蝙蝠</sub></strong> 逆転</td>
+                            <td>(s, c) ↦ (Invert(s), Negate(c))</td>
+                            <td>象限反転変換</td>
+                        </tr>
+                        <tr>
+                            <td><strong>V<sub>心</sub></strong> 共感</td>
+                            <td>(s, c) ↦ (Empathize(s), Internalize(c))</td>
+                            <td>I/We象限への変換</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">8 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 9: JOB Theory -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header">
+                <h2>4. JOB理論の圏論的定式化</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="def-box">
+                        <div class="def-label">定義 4.1</div>
+                        <div class="def-title">JOB圏 𝓙</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Ob(𝓙) = { J<sub>F</sub>, J<sub>E</sub>, J<sub>S</sub>, J<sub>V</sub> }
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:5px;">Functional, Emotional, Social, eVolutionary</p>
+                        <div class="math-formula" style="font-size:0.95rem;margin-top:8px;">
+                            chain: J<sub>i</sub> → J<sub>j</sub>（JOBチェーン射）
+                        </div>
+                    </div>
+                    <div class="def-box accent2">
+                        <div class="def-label">定義 4.2</div>
+                        <div class="def-title">JOB-象限積関手 Ψ</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Ψ: 𝓠 × 𝓙 → 𝓒
+                        </div>
+                        <div class="math-formula" style="font-size:0.95rem;margin-top:8px;">
+                            Ψ(α, J) = c<sub>αJ</sub>
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:5px;">象限αにおけるJOBタイプJの関心事</p>
+                    </div>
+                </div>
+                <div class="math-box" style="margin-top:12px;">
+                    <div class="math-title">拡張JOBマトリクス：20セルの圏論的表現</div>
+                    <div class="math-formula">
+                        |Ob(𝓠)| × |Ob(𝓙)| = 5 × 4 = 20
+                    </div>
+                    <div class="flow-horizontal" style="margin-top:10px;font-size:0.9rem;">
+                        <span>Ψ(I, J<sub>F</sub>) = c<sub>自己管理</sub></span>
+                        <span>Ψ(I, J<sub>E</sub>) = c<sub>充実感</sub></span>
+                        <span>Ψ(We, J<sub>S</sub>) = c<sub>承認</sub></span>
+                        <span>Ψ(ST, J<sub>V</sub>) = c<sub>進化適応</sub></span>
+                        <span>...</span>
+                    </div>
+                </div>
+                <div class="def-box accent3" style="margin-top:12px;">
+                    <div class="def-label">定義 4.3</div>
+                    <div class="def-title">JOBチェーン関手 Chain<sub>s</sub></div>
+                    <div class="math-formula" style="font-size:0.95rem;">
+                        Chain<sub>s</sub>: 𝓙 → 𝓒 &nbsp;&nbsp; Chain<sub>s</sub>(J<sub>F</sub> → J<sub>E</sub> → J<sub>S</sub> → J<sub>V</sub>) = c₁ → c₂ → c₃ → c₄
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">9 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 10: TRIZ -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header">
+                <h2>5. TRIZの圏論的定式化</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column" style="margin-bottom:12px;">
+                    <div class="def-box">
+                        <div class="def-label">定義 5.1</div>
+                        <div class="def-title">TRIZ原理圏 𝓣</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Ob(𝓣) = { π₁, π₂, ..., π₄₀ }
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">40の発明原理を対象とする圏</p>
+                    </div>
+                    <div class="def-box accent2">
+                        <div class="def-label">定義 5.2</div>
+                        <div class="def-title">CSE発見原理関手 Π</div>
+                        <div class="math-formula" style="font-size:1rem;">
+                            Π: 𝓣 → 𝓛₃
+                        </div>
+                        <p style="font-size:0.95rem;margin-top:8px;">TRIZ原理をCSE発見レンズに変換</p>
+                    </div>
+                </div>
+                <div class="math-box">
+                    <div class="math-title">具体的変換例</div>
+                    <div class="three-column" style="gap:8px;">
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₁<sub>分割</sub>) = L<sub>セグメント化</sub></div>
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₂<sub>抽出</sub>) = L<sub>本質抽出</sub></div>
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₁₃<sub>逆発想</sub>) = L<sub>象限反転</sub></div>
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₁₇<sub>他次元</sub>) = L<sub>象限移動</sub></div>
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₂₂<sub>災い転福</sub>) = L<sub>負の資源化</sub></div>
+                        <div class="math-formula" style="font-size:0.9rem;">Π(π₄₀<sub>複合</sub>) = L<sub>象限統合</sub></div>
+                    </div>
+                </div>
+                <div class="def-box accent3" style="margin-top:12px;">
+                    <div class="def-label">定義 5.4</div>
+                    <div class="def-title">矛盾解消関手 R</div>
+                    <div class="math-formula" style="font-size:1rem;">
+                        R: 𝓒 ×<sub>⊥</sub> 𝓒 → 𝓒 &nbsp;&nbsp;&nbsp; R<sub>π</sub>(c₁ ×<sub>⊥</sub> c₂) = c'
+                    </div>
+                    <p style="font-size:0.95rem;margin-top:8px;">TRIZ原理 π により、矛盾する関心事 c₁, c₂ から新関心事 c' を生成</p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">10 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 11: Natural Transformation -->
+        <div class="slide" data-slide="11">
+            <div class="slide-header">
+                <h2>6. 発見レンズ適用の自然変換</h2>
+            </div>
+            <div class="slide-content">
+                <div class="def-box" style="margin-bottom:15px;">
+                    <div class="def-label">定義 6.3</div>
+                    <div class="def-title">発見レンズ適用の自然変換</div>
+                    <div class="math-formula" style="font-size:1.15rem;">
+                        η<sub>L</sub>: Id<sub>𝓢×𝓒</sub> ⇒ 𝓜<sub>L</sub>
+                    </div>
+                    <p style="font-size:1rem;margin-top:8px;">𝓜<sub>L</sub> は発見レンズ L による変換関手</p>
+                </div>
+                <div class="diagram-box">
+                    <div class="diagram-title">自然性条件（可換図式）</div>
+                    <div class="category-diagram" style="font-size:1.1rem;line-height:2;">
+(s₁, c₁) ────f────→ (s₂, c₂)
+    │                      │
+  η<sub>L</sub>                    η<sub>L</sub>
+    ↓                      ↓
+𝓜<sub>L</sub>(s₁,c₁) ──𝓜<sub>L</sub>(f)──→ 𝓜<sub>L</sub>(s₂,c₂)
+                    </div>
+                </div>
+                <div class="card" style="margin-top:12px;background:#e8f6f3;">
+                    <h4 style="color:var(--accent2);">意味</h4>
+                    <p style="font-size:1.05rem;">任意の射 f: (s₁, c₁) → (s₂, c₂) に対し、発見レンズの適用が<span class="text-accent2">構造を保存</span>することを保証。<br>
+                    これにより、発見プロセスの<span class="highlight-text">一貫性と再現性</span>が数学的に担保される。</p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">11 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 12: Theorems -->
+        <div class="slide" data-slide="12">
+            <div class="slide-header">
+                <h2>7. 体系的発見の定理</h2>
+            </div>
+            <div class="slide-content">
+                <div class="theorem-box" style="margin-bottom:12px;">
+                    <div class="theorem-label">定理 7.1 ステークホルダー発見の網羅性</div>
+                    <div class="theorem-content">
+                        <div class="math-formula">
+                            S<sub>complete</sub> = ⋃<sub>α,β∈Ob(𝓠)</sub> T<sub>αβ</sub>(S₀|<sub>α</sub>)
+                        </div>
+                        <p>初期ステークホルダー集合 S₀ に対し、すべての象限変換関手を適用することで、潜在的ステークホルダー空間を<span class="text-accent">網羅的に探索</span>できる。</p>
+                    </div>
+                </div>
+                <div class="theorem-box" style="margin-bottom:12px;">
+                    <div class="theorem-label">定理 7.2 JOBマトリクスによる関心事生成</div>
+                    <div class="theorem-content">
+                        <div class="math-formula">
+                            C<sub>s</sub> = { Ψ(α, J) | α ∈ Ob(𝓠), J ∈ Ob(𝓙) } &nbsp;&nbsp; |C<sub>s</sub>| = 20
+                        </div>
+                        <p>任意のステークホルダー s に対し、拡張JOBマトリクス関手 Ψ により<span class="text-accent">20種類の関心事候補</span>が体系的に生成される。</p>
+                    </div>
+                </div>
+                <div class="theorem-box">
+                    <div class="theorem-label">定理 7.4 体系的システム発見</div>
+                    <div class="theorem-content">
+                        <div class="math-formula">
+                            Y<sub>discovered</sub> = { Φ(s', c') | (s', c') ∈ 𝓜<sub>Lₙ</sub> ∘ ... ∘ 𝓜<sub>L₁</sub>(s₀, c₀) }
+                        </div>
+                        <p>発見レンズの組合せ適用により、初期問題設定から<span class="text-accent">体系的にシステム候補群</span>が発見される。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">12 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 13: Discovery Patterns -->
+        <div class="slide" data-slide="13">
+            <div class="slide-header">
+                <h2>8. 発見パターンの圏論的表現</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="def-box">
+                        <div class="def-label">パターン1</div>
+                        <div class="def-title">探索型</div>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            Pattern<sub>探索</sub> = Chain<sub>s</sub> ∘ Ψ ∘ (T<sub>αβ</sub> × Id<sub>𝓙</sub>) ∘ V<sub>θ</sub>
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:8px;">未知領域の発見：視点変換 → 象限変換 → JOB展開 → チェーン分析</p>
+                    </div>
+                    <div class="def-box accent2">
+                        <div class="def-label">パターン2</div>
+                        <div class="def-title">深化型</div>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            Pattern<sub>深化</sub> = T<sub>αβ</sub> ∘ Chain<sub>s</sub> ∘ Ψ
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:8px;">既知領域の深掘り：JOB起点 → チェーン分析 → 象限展開</p>
+                    </div>
+                </div>
+                <div class="two-column" style="margin-top:12px;">
+                    <div class="def-box accent3">
+                        <div class="def-label">パターン3</div>
+                        <div class="def-title">解決型</div>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            Pattern<sub>解決</sub> = Φ ∘ (Id<sub>𝓢</sub> × R<sub>π</sub>) ∘ detect<sub>⊥</sub>
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:8px;">矛盾解消：矛盾検出 → TRIZ原理適用 → システム生成</p>
+                    </div>
+                    <div class="def-box accent4">
+                        <div class="def-label">パターン4</div>
+                        <div class="def-title">進化型</div>
+                        <div class="math-formula" style="font-size:0.95rem;">
+                            Pattern<sub>進化</sub> = Φ ∘ predict ∘ EvolutionLaw
+                        </div>
+                        <p style="font-size:0.9rem;margin-top:8px;">発展方向予測：進化法則適用 → 将来Concern予測 → システム生成</p>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:12px;background:#fef9e7;">
+                    <h4>パターンの組合せ</h4>
+                    <p style="font-size:1rem;">これらのパターンは<span class="text-accent">合成可能</span>であり、複雑な発見プロセスを構築できる：<br>
+                    <span style="font-family:'STIX Two Math',serif;">Pattern<sub>複合</sub> = Pattern<sub>解決</sub> ∘ Pattern<sub>探索</sub></span></p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">13 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 14: Summary Diagram -->
+        <div class="slide" data-slide="14">
+            <div class="slide-header" style="margin-bottom:10px;">
+                <h2>9. 総括：圏論的ダイアグラム</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box dark" style="padding:12px;">
+                    <div class="diagram-title" style="font-size:1.2rem;text-align:center;margin-bottom:5px;">CSE発見システムの圏論的構造</div>
+                    <div class="category-diagram" style="font-size:1rem;line-height:1.5;text-align:center;padding:8px;">
+                            <span style="color:#e67e22;font-weight:bold;">𝓛 (発見レンズ圏)</span>
+                           ╱  │  ╲
+                         ╱   │   ╲
+                    <span style="color:#e67e22;">𝓛₁</span>    <span style="color:#27ae60;">𝓛₂</span>    <span style="color:#8e44ad;">𝓛₃</span>
+                  (象限) (思考法) (JOB/TRIZ)
+                         ↓
+┌──────────────────────────────────────┐
+│      <span style="font-weight:bold;">M⁶⁵ = 𝓟 × 𝓠</span>  (30次元統合空間)      │
+│  {O,F,M,C,T,D} × {I,It,We,Its,ST}   │
+└──────────────────────────────────────┘
+                         ↓  埋め込み・射影
+              ┌────────────────────┐
+              │    <span style="font-weight:bold;">𝓢 × 𝓒</span>          │
+              │ (ステークホルダー×関心事) │
+              └────────────────────┘
+                         ↓  <span style="color:#e67e22;font-weight:bold;">Φ</span> (システム生成関手)
+                   ┌──────────┐
+                   │   <span style="font-weight:bold;">𝓨</span>     │
+                   │ (システム圏) │
+                   └──────────┘
+                    </div>
+                </div>
+                <div class="card" style="margin-top:8px;padding:10px;background:#e8f6f3;">
+                    <h4 style="color:var(--accent2);margin-bottom:3px;">理論的貢献</h4>
+                    <p style="font-size:1.05rem;">
+                        この圏論的定式化により、CSE発見レンズの体系が<span class="text-accent2">数学的に厳密に記述</span>され、各方法論（イノベーティブ思考法、JOB理論、TRIZ）が<span class="text-accent">どのように統合されるか</span>が明確になる。
+                    </p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">14 / 14</span>
+                <button class="nav-btn" onclick="nextSlide()" disabled>次へ →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 14;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            if (n < 1) currentSlide = 1;
+            else if (n > totalSlides) currentSlide = totalSlides;
+            else currentSlide = n;
+            
+            document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+            updateNavButtons();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function updateNavButtons() {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => {
+                const prevBtn = slide.querySelector('.nav-btn:first-child');
+                const nextBtn = slide.querySelector('.nav-btn:last-child');
+                const indicator = slide.querySelector('.page-indicator');
+                
+                prevBtn.disabled = currentSlide === 1;
+                nextBtn.disabled = currentSlide === totalSlides;
+                indicator.textContent = `${currentSlide} / ${totalSlides}`;
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(1);
+    </script>
+</body>
+</html>
